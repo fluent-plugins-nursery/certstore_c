@@ -38,7 +38,7 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
     store_loader = Certstore::Loader.new(store_name)
 
     thumbprint = "Nonexistent"
-    assert_raise(Certstore::Loader::CertstoreError) do
+    assert_raise(Certstore::Loader::LoaderError) do
       store_loader.find_cert(thumbprint)
     end
   end

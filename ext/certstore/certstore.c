@@ -17,7 +17,7 @@
 
 VALUE rb_mCertstore;
 VALUE rb_cCertLoader;
-VALUE rb_eCertstoreError;
+VALUE rb_eCertLoaderError;
 
 static void certstore_loader_free(void *certstore);
 
@@ -200,7 +200,7 @@ error:
   CertFreeCertificateContext(pContext);
 
   sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
-  rb_raise(rb_eCertstoreError, errBuf);
+  rb_raise(rb_eCertLoaderError, errBuf);
 }
 
 void
@@ -208,7 +208,7 @@ Init_certstore(void)
 {
   rb_mCertstore = rb_define_module("Certstore");
   rb_cCertLoader = rb_define_class_under(rb_mCertstore, "Loader", rb_cObject);
-  rb_eCertstoreError = rb_define_class_under(rb_cCertLoader, "CertstoreError", rb_eStandardError);
+  rb_eCertLoaderError = rb_define_class_under(rb_cCertLoader, "LoaderError", rb_eStandardError);
 
   rb_define_alloc_func(rb_cCertLoader, rb_win_certstore_loader_alloc);
   rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 1);
