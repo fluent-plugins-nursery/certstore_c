@@ -36,7 +36,8 @@ static void
 certstore_loader_free(void *ptr)
 {
   struct CertstoreLoader *loader = (struct CertstoreLoader *)ptr;
-  CertCloseStore(loader->hStore, 0);
+  if (loader->hStore)
+    CertCloseStore(loader->hStore, 0);
 
   xfree(ptr);
 }
@@ -126,6 +127,33 @@ rb_win_certstore_loader_each_pem(VALUE self)
 }
 
 static VALUE
+rb_win_certstore_loader_close_hstore(VALUE self)
+{
+  struct CertstoreLoader *loader;
+
+  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+
+  /* What should we dispose here? */
+
+  return Qnil;
+}
+
+static VALUE
+rb_win_certstore_loader_each(VALUE self)
+{
+  PCCERT_CONTEXT pContext = NULL;
+  struct CertstoreLoader *loader;
+
+  RETURN_ENUMERATOR(self, 0, 0);
+
+  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+
+  rb_ensure(rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_close_hstore, self);
+
+  return Qnil;
+}
+
+static VALUE
 rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
 {
   VALUE vThumbprint;
@@ -176,6 +204,6 @@ Init_certstore(void)
 
   rb_define_alloc_func(rb_cCertLoader, rb_win_certstore_loader_alloc);
   rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 1);
-  rb_define_method(rb_cCertLoader, "each_pem", rb_win_certstore_loader_each_pem, 0);
+  rb_define_method(rb_cCertLoader, "each", rb_win_certstore_loader_each, 0);
   rb_define_method(rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
 }
