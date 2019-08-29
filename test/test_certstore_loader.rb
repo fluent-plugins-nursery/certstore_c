@@ -13,7 +13,7 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
   end
 
   def test_loader_with_nonexistenct_logical_store
-    assert_nothing_raised do
+    assert_raise(Certstore::Loader::InvalidStoreNameError) do
       Certstore::Loader.new("NONEXISTENT")
     end
   end

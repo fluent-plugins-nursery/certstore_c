@@ -15,7 +15,7 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
   end
 
   def test_load_cert_store_with_noexistent_logical_store_name
-    assert_nothing_raised do
+    assert_raise(Certstore::Loader::InvalidStoreNameError) do
       loader = create_loader("Noexistent")
       loader.load_cert_store
     end
