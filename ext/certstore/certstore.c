@@ -90,20 +90,43 @@ wstr_to_mbstr(UINT cp, const WCHAR *wstr, int clen)
 static VALUE
 certificate_context_to_string(PCCERT_CONTEXT pContext)
 {
-  WCHAR wszString[4096];
+  WCHAR *wszString;
   DWORD cchString;
   CHAR *utf8str;
-  CHAR certificate[4150];
+  CHAR *certificate;
   CHAR *certHeader = "-----BEGIN CERTIFICATE-----\n";
   CHAR *certFooter = "\n-----END CERTIFICATE-----";
+  CHAR errBuf[256];
+  DWORD errCode;
 
-  cchString = ARRAYSIZE(wszString);
+  if (!CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
+                            CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &cchString)) {
+    rb_raise(rb_eCertLoaderError, "cannot obtain certificate string length.");
+  }
+
+  wszString = malloc(sizeof(WCHAR) * cchString);
   CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
                        CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, wszString, &cchString);
 
   utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
+  // malloc sizeof CHAR * ((base64 cert content + header + footer) length).
+  certificate = malloc(sizeof(CHAR) * (strlen(utf8str) + strlen(certHeader) + strlen(certFooter)));
   sprintf(certificate, "%s%s%s", certHeader, utf8str, certFooter);
-  return rb_utf8_str_new_cstr(certificate);
+
+  if (ERROR_SUCCESS != GetLastError() && CRYPT_E_NOT_FOUND != GetLastError()) {
+    sprintf(errBuf, "ErrorCode(%d)", GetLastError());
+
+    goto error;
+  }
+
+  VALUE rb_pem = rb_utf8_str_new_cstr(certificate);
+  free(wszString);
+  free(certificate);
+
+  return rb_pem;
+
+error:
+  rb_raise(rb_eCertLoaderError, errBuf);
 }
 
 static VALUE
