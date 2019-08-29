@@ -56,7 +56,7 @@ rb_win_certstore_loader_alloc(VALUE klass)
 static VALUE
 rb_win_certstore_loader_initialize(VALUE self, VALUE store_name)
 {
-  PWSTR winStoreName;
+  VALUE vStoreName;
   struct CertstoreLoader *loader;
   DWORD len;
 
@@ -64,7 +64,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name)
 
   // channel : To wide char
   len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), NULL, 0);
-  winStoreName = ALLOCV_N(WCHAR, winStoreName, len+1);
+  PWSTR winStoreName = ALLOCV_N(WCHAR, vStoreName, len+1);
   MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), winStoreName, len);
   winStoreName[len] = L'\0';
 
