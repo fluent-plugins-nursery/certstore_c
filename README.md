@@ -1,24 +1,28 @@
-# CertstoreC
+# Certstore
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/certstore_c`. To experiment with that code, run `bin/console` for an interactive prompt.
+[![Build status](https://ci.appveyor.com/api/projects/status/0iukmyau7wq971o4/branch/master?svg=true)](https://ci.appveyor.com/project/cosmo0920/certstore-c/branch/master)
 
-TODO: Delete this and the text above, and describe your gem
+## Prerequisites
+
+* Windows XP/Windows Server 2003 or later.
+* gcc and g++ from MSYS2 for building C/C++ extension.
+* Ruby 2.4 or later with MSYS2.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'certstore_c'
+ridk exec gem 'certstore_c'
 ```
 
 And then execute:
 
-    $ bundle
+    $ ridk exec bundle
 
 Or install it yourself as:
 
-    $ gem install certstore_c
+    $ ridk exec gem install certstore_c
 
 ## Usage
 
@@ -32,4 +36,4 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/certstore_c.
+Bug reports and pull requests are welcome on GitHub at https://github.com/cosmo0920/certstore_c.
