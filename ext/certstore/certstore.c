@@ -87,11 +87,8 @@ wstr_to_mbstr(UINT cp, const WCHAR *wstr, int clen)
 }
 
 static VALUE
-rb_win_certstore_loader_each_pem(VALUE self)
+certificate_context_to_string(PCCERT_CONTEXT pContext)
 {
-  PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader *loader;
-  DWORD dwDst = 0;
   WCHAR wszString[4096];
   DWORD cchString;
   CHAR *utf8str;
@@ -99,19 +96,27 @@ rb_win_certstore_loader_each_pem(VALUE self)
   CHAR *certHeader = "-----BEGIN CERTIFICATE-----\n";
   CHAR *certFooter = "\n-----END CERTIFICATE-----";
 
+  cchString = ARRAYSIZE(wszString);
+  CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
+                       CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, wszString, &cchString);
+
+  utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
+  sprintf(certificate, "%s%s%s", certHeader, utf8str, certFooter);
+  return rb_utf8_str_new_cstr(certificate);
+}
+
+static VALUE
+rb_win_certstore_loader_each_pem(VALUE self)
+{
+  PCCERT_CONTEXT pContext = NULL;
+  struct CertstoreLoader *loader;
+
   RETURN_ENUMERATOR(self, 0, 0);
 
   TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   while ((pContext = CertEnumCertificatesInStore(loader->hStore, pContext)) != NULL) {
-
-    cchString = ARRAYSIZE(wszString);
-    CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
-                         CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,wszString,&cchString);
-
-    utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
-    sprintf(certificate, "%s%s%s", certHeader, utf8str, certFooter);
-    VALUE rb_certificate = rb_utf8_str_new_cstr(certificate);
+    VALUE rb_certificate = certificate_context_to_string(pContext);
     rb_yield(rb_certificate);
   }
 
