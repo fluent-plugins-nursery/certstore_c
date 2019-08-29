@@ -1,12 +1,14 @@
 require "certstore/certstore"
 require "openssl"
+require "logger"
 
 module Certstore
   module OpenSSL
     class Loader
       attr_reader :cert_store
 
-      def initialize(cert_store, store_name)
+      def initialize(log = Logger.new(STDOUT), cert_store, store_name)
+        @log = log
         @cert_store = cert_store
         @store_name = store_name
         @loader = Certstore::Loader.new(@store_name)
