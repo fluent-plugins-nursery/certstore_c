@@ -125,6 +125,48 @@ rb_win_certstore_loader_each_pem(VALUE self)
   return Qnil;
 }
 
+static VALUE
+rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
+{
+  VALUE vThumbprint;
+  PCCERT_CONTEXT pContext = NULL;
+  struct CertstoreLoader *loader;
+  DWORD len;
+
+  Check_Type(rb_thumbprint, T_STRING);
+
+  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+
+  // channel : To wide char
+  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
+  WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
+  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
+  winThumbprint[len] = L'\0';
+
+  BYTE pbThumb[CERT_THUMBPRINT_SIZE];
+  CRYPT_HASH_BLOB blob;
+  blob.cbData = CERT_THUMBPRINT_SIZE;
+  blob.pbData = pbThumb;
+  CryptStringToBinaryW(winThumbprint, CERT_THUMBPRINT_STR_LENGTH, CRYPT_STRING_HEX, pbThumb,
+                       &blob.cbData, NULL, NULL);
+
+  pContext = CertFindCertificateInStore(
+              loader->hStore,
+              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+              0,
+              CERT_FIND_HASH,
+              &blob,
+              pContext);
+
+  if (!pContext)
+    return Qnil;
+
+  VALUE rb_certificate = certificate_context_to_string(pContext);
+  CertFreeCertificateContext(pContext);
+
+  return rb_certificate;
+}
+
 void
 Init_certstore(void)
 {
@@ -135,4 +177,5 @@ Init_certstore(void)
   rb_define_alloc_func(rb_cCertLoader, rb_win_certstore_loader_alloc);
   rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 1);
   rb_define_method(rb_cCertLoader, "each_pem", rb_win_certstore_loader_each_pem, 0);
+  rb_define_method(rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
 }
