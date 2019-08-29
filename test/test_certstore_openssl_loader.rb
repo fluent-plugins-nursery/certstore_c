@@ -34,6 +34,7 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
     thumbprint = certificate_thumbprints.first
     openssl_x509_obj = loader.get_certificate(thumbprint)
     assert_true openssl_x509_obj.is_a?(OpenSSL::X509::Certificate)
+    assert_true loader.valid_duration?(openssl_x509_obj)
   end
 
   def test_get_certificate_with_nonexistent_thumbprint
