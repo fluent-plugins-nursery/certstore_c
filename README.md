@@ -26,7 +26,7 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Usage examples are found in [example directory](example).
 
 ## Development
 
