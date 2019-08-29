@@ -25,7 +25,12 @@ module Certstore
         end
       end
 
+      def cleanup_thumbprint(thumbprint)
+        thumbprint.gsub(/[^A-Za-z0-9]/, "")
+      end
+
       def get_certificate(thumbprint)
+        thumbprint = cleanup_thumbprint(thumbprint)
         ::OpenSSL::X509::Certificate.new(@loader.find_cert(thumbprint))
       end
     end
