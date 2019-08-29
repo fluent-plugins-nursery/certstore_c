@@ -160,6 +160,7 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
   PCCERT_CONTEXT pContext = NULL;
   struct CertstoreLoader *loader;
   DWORD len;
+  CHAR errBuf[256];
 
   Check_Type(rb_thumbprint, T_STRING);
 
@@ -187,12 +188,19 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
               pContext);
 
   if (!pContext)
-    return Qnil;
+    goto error;
 
   VALUE rb_certificate = certificate_context_to_string(pContext);
   CertFreeCertificateContext(pContext);
 
   return rb_certificate;
+
+error:
+
+  CertFreeCertificateContext(pContext);
+
+  sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+  rb_raise(rb_eCertstoreError, errBuf);
 }
 
 void
