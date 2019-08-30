@@ -40,7 +40,7 @@ rb_win_certstore_loader_alloc(VALUE klass)
 }
 
 static VALUE
-rb_win_certstore_loader_initialize(VALUE self, VALUE store_name)
+rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enterprise)
 {
   VALUE vStoreName;
   struct CertstoreLoader *loader;
@@ -56,7 +56,11 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name)
 
   TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
-  loader->hStore = CertOpenSystemStoreW(0, winStoreName);
+  if (RTEST(use_enterprise)) {
+    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, winStoreName);
+  } else {
+    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
+  }
 
   return Qnil;
 }
@@ -219,7 +223,7 @@ Init_certstore(void)
   rb_eCertLoaderError = rb_define_class_under(rb_cCertLoader, "LoaderError", rb_eStandardError);
 
   rb_define_alloc_func(rb_cCertLoader, rb_win_certstore_loader_alloc);
-  rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 1);
+  rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 2);
   rb_define_method(rb_cCertLoader, "each", rb_win_certstore_loader_each, 0);
   rb_define_method(rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
 }

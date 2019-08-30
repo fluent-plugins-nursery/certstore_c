@@ -1,9 +1,9 @@
-require "helper"
+require_relative "./helper"
 require "openssl"
 
 class CertstoreLoaderTest < ::Test::Unit::TestCase
   def setup
-    @loader = Certstore::Loader.new("ROOT")
+    @loader = Certstore::Loader.new("ROOT", enterprise: false)
   end
 
   def test_loader
@@ -14,13 +14,13 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
 
   def test_loader_with_nonexistenct_logical_store
     assert_raise(Certstore::Loader::InvalidStoreNameError) do
-      Certstore::Loader.new("NONEXISTENT")
+      Certstore::Loader.new("NONEXISTENT", enterprise: false)
     end
   end
 
   def test_get_certificate
     store_name = "ROOT"
-    store_loader = Certstore::Loader.new(store_name)
+    store_loader = Certstore::Loader.new(store_name, enterprise: false)
     certificate_thumbprints = []
     store_loader.each do |pem|
       x509_certificate_obj = OpenSSL::X509::Certificate.new(pem)
@@ -35,7 +35,7 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
 
   def test_get_non_existent_certificate
     store_name = "ROOT"
-    store_loader = Certstore::Loader.new(store_name)
+    store_loader = Certstore::Loader.new(store_name, enterprise: false)
 
     thumbprint = "Nonexistent"
     assert_raise(Certstore::Loader::LoaderError) do

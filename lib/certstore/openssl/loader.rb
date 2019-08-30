@@ -7,11 +7,11 @@ module Certstore
     class Loader
       attr_reader :cert_store
 
-      def initialize(log = Logger.new(STDOUT), cert_store, store_name)
+      def initialize(log = Logger.new(STDOUT), cert_store, store_name, enterprise: true)
         @log = log
         @cert_store = cert_store
         @store_name = store_name
-        @loader = Certstore::Loader.new(@store_name)
+        @loader = Certstore::Loader.new(@store_name, enterprise: enterprise)
       end
 
       def load_cert_store

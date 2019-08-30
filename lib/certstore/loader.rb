@@ -5,11 +5,11 @@ module Certstore
 
     class InvalidStoreNameError < StandardError; end
 
-    def initialize(store_name)
+    def initialize(store_name, enterprise: true)
       unless store_name && valid_logical_store_list.include?(store_name.upcase)
         raise InvalidStoreNameError, "'#{store_name}' is not a valid logical store name"
       end
-      initialize_raw(store_name)
+      initialize_raw(store_name, enterprise)
     end
 
     def valid_logical_store_list

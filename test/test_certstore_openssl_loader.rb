@@ -1,10 +1,10 @@
-require "helper"
+require_relative "./helper"
 
 class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
-  def create_loader(cert_logical_store_name)
+  def create_loader(cert_logical_store_name, enterprise: false)
     cert_store = OpenSSL::X509::Store.new
 
-    Certstore::OpenSSL::Loader.new(cert_store, cert_logical_store_name)
+    Certstore::OpenSSL::Loader.new(cert_store, cert_logical_store_name, enterprise: enterprise)
   end
 
   def test_load_cert_store
@@ -24,7 +24,7 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
   def test_get_certificate
     store_name = "ROOT"
     loader = create_loader(store_name)
-    store_loader = Certstore::Loader.new(store_name)
+    store_loader = Certstore::Loader.new(store_name, enterprise: false)
     certificate_thumbprints = []
     store_loader.each do |pem|
       x509_certificate_obj = OpenSSL::X509::Certificate.new(pem)
