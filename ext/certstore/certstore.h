@@ -6,9 +6,9 @@
 
 #ifdef __GNUC__
 # include <w32api.h>
-# define MINIMUM_WINDOWS_VERSION WindowsVista
+# define MINIMUM_WINDOWS_VERSION WindowsXP
 #else /* __GNUC__ */
-# define MINIMUM_WINDOWS_VERSION 0x0600 /* Vista */
+# define MINIMUM_WINDOWS_VERSION 0x0501 /* XP */
 #endif /* __GNUC__ */
 
 #ifdef _WIN32_WINNT
