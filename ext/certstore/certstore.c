@@ -57,9 +57,9 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   if (RTEST(use_enterprise)) {
-    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, winStoreName);
+    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, winStoreName);
   } else {
-    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
+    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
   }
 
   return Qnil;
