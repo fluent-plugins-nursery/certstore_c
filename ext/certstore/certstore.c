@@ -48,7 +48,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
 
   Check_Type(store_name, T_STRING);
 
-  // channel : To wide char
+  // store_name : To wide char
   len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), NULL, 0);
   PWSTR winStoreName = ALLOCV_N(WCHAR, vStoreName, len+1);
   MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), winStoreName, len);
@@ -178,7 +178,7 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
 
   TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
-  // channel : To wide char
+  // thumbprint : To wide char
   len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
   WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
   MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
