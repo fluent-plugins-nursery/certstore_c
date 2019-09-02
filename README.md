@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-* Windows XP/Windows Server 2003 or later.
+* Windows Vista/Windows Server 2008 or later.
 * gcc and g++ from MSYS2 for building C/C++ extension.
 * Ruby 2.4 or later with MSYS2.
 
