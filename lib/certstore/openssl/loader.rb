@@ -35,6 +35,12 @@ module Certstore
         ::OpenSSL::X509::Certificate.new(@loader.find_cert(thumbprint))
       end
 
+      def export_pkcs12(thumbprint, password)
+        thumbprint = cleanup_thumbprint(thumbprint)
+        pkcs12 = @loader.export_pfx(thumbprint, password)
+        ::OpenSSL::PKCS12.new(pkcs12, password)
+      end
+
       def valid_duration?(x509_obj)
         x509_obj.not_before < Time.now.utc && x509_obj.not_after > Time.now.utc
       end
