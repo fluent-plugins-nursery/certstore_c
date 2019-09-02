@@ -61,6 +61,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   } else {
     loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
   }
+  ALLOCV_END(vStoreName);
 
   return Qnil;
 }
@@ -204,6 +205,7 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
 
   VALUE rb_certificate = certificate_context_to_string(pContext);
   CertFreeCertificateContext(pContext);
+  ALLOCV_END(vThumbprint);
 
   return rb_certificate;
 
