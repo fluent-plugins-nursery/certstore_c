@@ -11,6 +11,7 @@ includedir = RbConfig::CONFIG["includedir"]
 dir_config("certstore", includedir, libdir)
 
 have_library("crypt32")
+have_func("PFXExportCertStoreEx", "Wincrypt.h")
 
 $LDFLAGS << " -lCrypt32"
 $CFLAGS << " -std=c99 -fPIC -fms-extensions "
