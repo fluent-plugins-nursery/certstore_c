@@ -225,8 +225,9 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
   struct CertstoreLoader *loader;
   DWORD len;
   CHAR errBuf[256];
-  HCERTSTORE hMemoryStore;
+  HCERTSTORE hMemoryStore = NULL;
   VALUE vPassword;
+  CRYPT_DATA_BLOB pfxPacket;
 
   TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
@@ -260,12 +261,9 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
 
     goto error;
   }
-  ALLOCV_END(vThumbprint);
 
   hMemoryStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL);
   CertAddCertificateContextToStore(hMemoryStore, pContext, CERT_STORE_ADD_ALWAYS, NULL);
-
-  CRYPT_DATA_BLOB pfxPacket;
 
   pfxPacket.pbData = NULL;
   if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
@@ -278,8 +276,11 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
   if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
     sprintf(errBuf, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
 
+    CryptMemFree(pfxPacket.pbData);
+
     goto error;
   }
+  ALLOCV_END(vThumbprint);
   ALLOCV_END(vPassword);
 
   VALUE rb_str = rb_str_new(pfxPacket.pbData, pfxPacket.cbData);
@@ -294,9 +295,10 @@ error:
   ALLOCV_END(vThumbprint);
   ALLOCV_END(vPassword);
 
-  CryptMemFree(pfxPacket.pbData);
-  CertCloseStore(hMemoryStore, CERT_CLOSE_STORE_CHECK_FLAG);
-  CertFreeCertificateContext(pContext);
+  if (pContext)
+    CertFreeCertificateContext(pContext);
+  if (hMemoryStore)
+    CertCloseStore(hMemoryStore, CERT_CLOSE_STORE_CHECK_FLAG);
 
   rb_raise(rb_eCertLoaderError, errBuf);
 }
