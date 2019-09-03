@@ -121,12 +121,14 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   }
 
   VALUE rb_pem = rb_utf8_str_new_cstr(certificate);
+  xfree(utf8str);
   free(wszString);
   free(certificate);
 
   return rb_pem;
 
 error:
+  xfree(utf8str);
   free(wszString);
   free(certificate);
 
