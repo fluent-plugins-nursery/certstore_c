@@ -1,3 +1,6 @@
+require 'bundler'
+Bundler::GemHelper.install_tasks
+
 require "bundler/gem_tasks"
 require "bundler/setup"
 require "rake/testtask"
@@ -10,8 +13,12 @@ end
 
 require "rake/extensiontask"
 
-Rake::ExtensionTask.new("certstore") do |ext|
+spec = eval File.read("certstore_c.gemspec")
+
+Rake::ExtensionTask.new("certstore", spec) do |ext|
   ext.lib_dir = "lib/certstore"
 end
+
+CLEAN.include('lib/certstore/certstore.*')
 
 task :default => [:clobber, :compile, :test]
