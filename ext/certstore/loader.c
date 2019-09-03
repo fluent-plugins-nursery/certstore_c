@@ -137,7 +137,7 @@ rb_win_certstore_loader_each_pem(VALUE self)
 }
 
 static VALUE
-rb_win_certstore_loader_close_hstore(VALUE self)
+rb_win_certstore_loader_dispose(VALUE self)
 {
   struct CertstoreLoader *loader;
 
@@ -158,7 +158,7 @@ rb_win_certstore_loader_each(VALUE self)
 
   TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
-  rb_ensure(rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_close_hstore, self);
+  rb_ensure(rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_dispose, self);
 
   return Qnil;
 }
