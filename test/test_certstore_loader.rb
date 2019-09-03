@@ -60,4 +60,14 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
     openssl_pkcs12_obj = OpenSSL::PKCS12.new(pkcs12, password)
     assert_true openssl_pkcs12_obj.is_a?(OpenSSL::PKCS12)
   end
+
+  def test_export_pfx_with_non_existent_thumbprint
+    store_name = "ROOT"
+    store_loader = Certstore::Loader.new(store_name, enterprise: false)
+
+    thumbprint = "Nonexistent"
+    assert_raise(Certstore::Loader::LoaderError) do
+      store_loader.export_pfx(thumbprint, "passwd")
+    end
+  end
 end

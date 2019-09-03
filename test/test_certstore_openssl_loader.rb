@@ -61,4 +61,11 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
     openssl_pkcs12_obj = loader.export_pkcs12(thumbprint, password)
     assert_true openssl_pkcs12_obj.is_a?(OpenSSL::PKCS12)
   end
+
+  def test_export_pkcs12_with_nonexistent_thumbprint
+    loader = create_loader("ROOT")
+    assert_raise(Certstore::Loader::LoaderError) do
+      loader.export_pkcs12("nonexistent", "passwd")
+    end
+  end
 end
