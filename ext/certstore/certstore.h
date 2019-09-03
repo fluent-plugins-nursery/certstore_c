@@ -30,7 +30,7 @@
 #define CERT_THUMBPRINT_STR_LENGTH 40
 #define CERT_THUMBPRINT_SIZE (160 / 8)
 
-#include <Wincrypt.h>
+#include <wincrypt.h>
 
 VALUE rb_mCertstore;
 VALUE rb_cCertLoader;
