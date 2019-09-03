@@ -1,3 +1,14 @@
+/* certstore_c */
+/* Licensed under the Apache License, Version 2.0 (the "License"); */
+/* you may not use this file except in compliance with the License. */
+/* You may obtain a copy of the License at */
+/*     http://www.apache.org/licenses/LICENSE-2.0 */
+/* Unless required by applicable law or agreed to in writing, software */
+/* distributed under the License is distributed on an "AS IS" BASIS, */
+/* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. */
+/* See the License for the specific language governing permissions and */
+/* limitations under the License. */
+
 #include <certstore.h>
 
 VALUE rb_mCertstore;
@@ -217,6 +228,92 @@ error:
   rb_raise(rb_eCertLoaderError, errBuf);
 }
 
+static VALUE
+rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_password)
+{
+  VALUE vThumbprint;
+  PCCERT_CONTEXT pContext = NULL;
+  struct CertstoreLoader *loader;
+  DWORD len;
+  CHAR errBuf[256];
+  HCERTSTORE hMemoryStore = NULL;
+  VALUE vPassword;
+  CRYPT_DATA_BLOB pfxPacket;
+
+  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+
+  // thumbprint : To wide char
+  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
+  WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
+  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
+  winThumbprint[len] = L'\0';
+  // password : To wide char
+  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_password), RSTRING_LEN(rb_password), NULL, 0);
+  WCHAR *winPassword = ALLOCV_N(WCHAR, vPassword, len+1);
+  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_password), RSTRING_LEN(rb_password), winPassword, len);
+  winPassword[len] = L'\0';
+
+  BYTE pbThumb[CERT_THUMBPRINT_SIZE];
+  CRYPT_HASH_BLOB blob;
+  blob.cbData = CERT_THUMBPRINT_SIZE;
+  blob.pbData = pbThumb;
+  CryptStringToBinaryW(winThumbprint, CERT_THUMBPRINT_STR_LENGTH, CRYPT_STRING_HEX, pbThumb,
+                       &blob.cbData, NULL, NULL);
+
+  pContext = CertFindCertificateInStore(
+              loader->hStore,
+              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+              0,
+              CERT_FIND_HASH,
+              &blob,
+              pContext);
+  if (!pContext) {
+    sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+
+    goto error;
+  }
+
+  hMemoryStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL);
+  CertAddCertificateContextToStore(hMemoryStore, pContext, CERT_STORE_ADD_ALWAYS, NULL);
+
+  pfxPacket.pbData = NULL;
+  if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
+    sprintf(errBuf, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
+
+    goto error;
+  }
+
+  pfxPacket.pbData = (LPBYTE)CryptMemAlloc(pfxPacket.cbData);
+  if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
+    sprintf(errBuf, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
+
+    CryptMemFree(pfxPacket.pbData);
+
+    goto error;
+  }
+  ALLOCV_END(vThumbprint);
+  ALLOCV_END(vPassword);
+
+  VALUE rb_str = rb_str_new(pfxPacket.pbData, pfxPacket.cbData);
+
+  CryptMemFree(pfxPacket.pbData);
+  CertCloseStore(hMemoryStore, CERT_CLOSE_STORE_CHECK_FLAG);
+  CertFreeCertificateContext(pContext);
+
+  return rb_str;
+
+error:
+  ALLOCV_END(vThumbprint);
+  ALLOCV_END(vPassword);
+
+  if (pContext)
+    CertFreeCertificateContext(pContext);
+  if (hMemoryStore)
+    CertCloseStore(hMemoryStore, CERT_CLOSE_STORE_CHECK_FLAG);
+
+  rb_raise(rb_eCertLoaderError, errBuf);
+}
+
 void
 Init_certstore(void)
 {
@@ -228,4 +325,5 @@ Init_certstore(void)
   rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 2);
   rb_define_method(rb_cCertLoader, "each", rb_win_certstore_loader_each, 0);
   rb_define_method(rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
+  rb_define_method(rb_cCertLoader, "export_pfx", rb_win_certstore_loader_export_pfx, 2);
 }

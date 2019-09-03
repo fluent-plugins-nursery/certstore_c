@@ -38,9 +38,38 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
   end
 
   def test_get_certificate_with_nonexistent_thumbprint
+    loader = create_loader("ROOT")
     assert_raise(Certstore::Loader::LoaderError) do
-      loader = create_loader("ROOT")
-      assert_nil loader.get_certificate("nonexistent")
+      loader.get_certificate("nonexistent")
+    end
+  end
+
+  def test_export_pkcs12
+    require 'securerandom'
+
+    store_name = "ROOT"
+    loader = create_loader(store_name)
+    store_loader = Certstore::Loader.new(store_name, enterprise: false)
+    certificate_thumbprints = []
+    store_loader.each do |pem|
+      x509_certificate_obj = OpenSSL::X509::Certificate.new(pem)
+      certificate_thumbprints << OpenSSL::Digest::SHA1.new(x509_certificate_obj.to_der).to_s
+    end
+
+    thumbprint = certificate_thumbprints.first
+    password = SecureRandom.hex(10)
+    openssl_pkcs12_obj = loader.export_pkcs12(thumbprint, password)
+    assert_true openssl_pkcs12_obj.is_a?(OpenSSL::PKCS12)
+    ca_certs = openssl_pkcs12_obj.ca_certs
+    if not ca_certs.empty?
+      assert_true loader.valid_duration?(ca_certs.first)
+    end
+  end
+
+  def test_export_pkcs12_with_nonexistent_thumbprint
+    loader = create_loader("ROOT")
+    assert_raise(Certstore::Loader::LoaderError) do
+      loader.export_pkcs12("nonexistent", "passwd")
     end
   end
 end

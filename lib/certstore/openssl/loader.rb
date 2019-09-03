@@ -1,3 +1,19 @@
+#
+# certstore_c
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
 require "certstore/certstore"
 require "openssl"
 require "logger"
@@ -33,6 +49,12 @@ module Certstore
       def get_certificate(thumbprint)
         thumbprint = cleanup_thumbprint(thumbprint)
         ::OpenSSL::X509::Certificate.new(@loader.find_cert(thumbprint))
+      end
+
+      def export_pkcs12(thumbprint, password)
+        thumbprint = cleanup_thumbprint(thumbprint)
+        pkcs12 = @loader.export_pfx(thumbprint, password)
+        ::OpenSSL::PKCS12.new(pkcs12, password)
       end
 
       def valid_duration?(x509_obj)
