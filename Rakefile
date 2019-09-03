@@ -1,9 +1,8 @@
 require 'bundler'
 Bundler::GemHelper.install_tasks
 
-require "bundler/gem_tasks"
-require "bundler/setup"
 require "rake/testtask"
+require "rake/clean"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
