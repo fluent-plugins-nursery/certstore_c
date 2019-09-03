@@ -127,6 +127,9 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   return rb_pem;
 
 error:
+  free(wszString);
+  free(certificate);
+
   rb_raise(rb_eCertLoaderError, errBuf);
 }
 
