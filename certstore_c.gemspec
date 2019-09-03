@@ -37,8 +37,9 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new(">= 2.4".freeze)
   spec.extensions = ["ext/certstore/extconf.rb"]
 
-  spec.add_development_dependency "bundler", "~> 2.0"
+  spec.add_development_dependency "bundler", [">= 1.16", "< 3"]
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rake-compiler", "~> 1.0"
+  spec.add_development_dependency "rake-compiler-dock", "~> 0.7.2"
   spec.add_development_dependency "test-unit", "~> 3.3.3"
 end
