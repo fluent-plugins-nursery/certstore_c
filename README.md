@@ -13,7 +13,7 @@
 Add this line to your application's Gemfile:
 
 ```ruby
-ridk exec gem 'certstore_c'
+gem 'certstore_c'
 ```
 
 And then execute:
