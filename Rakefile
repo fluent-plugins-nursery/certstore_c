@@ -10,8 +10,6 @@ end
 
 require "rake/extensiontask"
 
-task :build => :compile
-
 Rake::ExtensionTask.new("certstore") do |ext|
   ext.lib_dir = "lib/certstore"
 end
