@@ -45,6 +45,7 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
   end
 
   def test_export_pkcs12
+    omit "Ruby 2.3 DevKit seems not to be able to support it properly" unless RUBY_VERSION >= "2.4.0"
     require 'securerandom'
 
     store_name = "ROOT"
