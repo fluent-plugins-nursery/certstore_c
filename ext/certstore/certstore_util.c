@@ -11,10 +11,13 @@
 
 #include <certstore.h>
 
-void
-Init_certstore(void)
+char*
+wstr_to_mbstr(UINT cp, const WCHAR *wstr, int clen)
 {
-  rb_mCertstore = rb_define_module("Certstore");
+    char *ptr;
+    int len = WideCharToMultiByte(cp, 0, wstr, clen, NULL, 0, NULL, NULL);
+    if (!(ptr = xmalloc(len))) return NULL;
+    WideCharToMultiByte(cp, 0, wstr, clen, ptr, len, NULL, NULL);
 
-  Init_certstore_loader(rb_mCertstore);
+    return ptr;
 }
