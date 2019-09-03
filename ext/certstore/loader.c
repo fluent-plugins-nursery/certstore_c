@@ -81,14 +81,20 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   CHAR errBuf[256];
   DWORD errCode;
 
+#ifndef CRYPT_STRING_NOCRLF
+  #define CRYPT_STRING_NOCRLF 0x40000000
+#endif
+
   if (!CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
-                            CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &cchString)) {
+                            CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
+                            NULL, &cchString)) {
     rb_raise(rb_eCertLoaderError, "cannot obtain certificate string length.");
   }
 
   wszString = malloc(sizeof(WCHAR) * cchString);
   CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
-                       CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, wszString, &cchString);
+                       CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
+                       wszString, &cchString);
 
   utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
   // malloc sizeof CHAR * ((base64 cert content + header + footer) length).
