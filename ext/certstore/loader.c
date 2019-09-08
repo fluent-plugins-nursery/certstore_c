@@ -221,6 +221,96 @@ error:
 }
 
 static VALUE
+rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
+{
+  struct CertstoreLoader *loader;
+  CHAR errBuf[256];
+
+  Check_Type(rb_der_cert_bin_str, T_STRING);
+
+  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+
+  if (CertAddEncodedCertificateToStore(loader->hStore, X509_ASN_ENCODING,
+                                       RSTRING_PTR(rb_der_cert_bin_str), RSTRING_LEN(rb_der_cert_bin_str),
+                                       CERT_STORE_ADD_NEW,
+                                       NULL)) {
+    return Qtrue;
+  } else {
+    DWORD errCode = GetLastError();
+
+    switch (errCode){
+    case CRYPT_E_EXISTS:
+      return Qfalse;
+    default: {
+      sprintf(errBuf, "Cannot add certificates. ErrorCode: %d", GetLastError());
+      goto error;
+
+      }
+    }
+  }
+
+  return Qtrue;
+
+error:
+
+  rb_raise(rb_eCertLoaderError, errBuf);
+}
+
+static VALUE
+rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
+{
+  VALUE vThumbprint;
+  PCCERT_CONTEXT pContext = NULL;
+  struct CertstoreLoader *loader;
+  DWORD len;
+  CHAR errBuf[256];
+
+  Check_Type(rb_thumbprint, T_STRING);
+
+  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+
+  // thumbprint : To wide char
+  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
+  WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
+  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
+  winThumbprint[len] = L'\0';
+
+  BYTE pbThumb[CERT_THUMBPRINT_SIZE];
+  CRYPT_HASH_BLOB blob;
+  blob.cbData = CERT_THUMBPRINT_SIZE;
+  blob.pbData = pbThumb;
+  CryptStringToBinaryW(winThumbprint, CERT_THUMBPRINT_STR_LENGTH, CRYPT_STRING_HEX, pbThumb,
+                       &blob.cbData, NULL, NULL);
+
+  pContext = CertFindCertificateInStore(
+              loader->hStore,
+              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+              0,
+              CERT_FIND_HASH,
+              &blob,
+              pContext);
+
+  if (!pContext)
+    goto error;
+
+  BOOL result = CertDeleteCertificateFromStore(pContext);
+  CertFreeCertificateContext(pContext);
+  ALLOCV_END(vThumbprint);
+
+  if (result)
+    return Qtrue;
+  else
+    return Qfalse;
+
+error:
+
+  CertFreeCertificateContext(pContext);
+
+  sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+  rb_raise(rb_eCertLoaderError, errBuf);
+}
+
+static VALUE
 rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_password)
 {
   VALUE vThumbprint;
@@ -316,5 +406,7 @@ Init_certstore_loader(VALUE rb_mCertstore)
   rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 2);
   rb_define_method(rb_cCertLoader, "each", rb_win_certstore_loader_each, 0);
   rb_define_method(rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
+  rb_define_method(rb_cCertLoader, "delete_cert", rb_win_certstore_loader_delete_certificate, 1);
+  rb_define_method(rb_cCertLoader, "add_cert", rb_win_certstore_loader_add_certificate, 1);
   rb_define_method(rb_cCertLoader, "export_pfx", rb_win_certstore_loader_export_pfx, 2);
 }
