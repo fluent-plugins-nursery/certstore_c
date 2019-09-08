@@ -60,6 +60,18 @@ module Certstore
       def valid_duration?(x509_obj)
         x509_obj.not_before < Time.now.utc && x509_obj.not_after > Time.now.utc
       end
+
+      def add_certificate(cert_path)
+        File.readable?(cert_path)
+        File.open(cert_path) do |file|
+          @loader.add_cert(::OpenSSL::X509::Certificate.new(file.read).to_der)
+        end
+      end
+
+      def delete_certificate(thumbprint)
+        thumbprint = cleanup_thumbprint(thumbprint)
+        @loader.delete_cert(thumbprint)
+      end
     end
   end
 end
