@@ -82,7 +82,7 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
     end
 
     def test_add_and_delete_certificate
-      @loader.add_certificate(File.join(__dir__, "data", "ca_cert.pem"))
+      @loader.add_certificate(TEST_CERT_PATH)
       assert_true @loader.delete_certificate(get_test_cert_hash.to_s)
     end
   end

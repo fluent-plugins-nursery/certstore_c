@@ -80,7 +80,7 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
     end
 
     def test_add_and_delete_certificate
-      File.open(File.join(__dir__, "data", "ca_cert.pem")) do |file|
+      File.open(TEST_CERT_PATH) do |file|
         @store_loader.add_cert(OpenSSL::X509::Certificate.new(file.read).to_der)
       end
       assert_true @store_loader.delete_cert(get_test_cert_hash.to_s)
