@@ -76,14 +76,14 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
     def setup
       store_name = "ROOT"
       @store_loader = Certstore::Loader.new(store_name, enterprise: false)
-      @store_loader.delete_cert("4b34e3c6fa22f11902c3b892811d7afd50af2453") rescue nil
+      @store_loader.delete_cert(get_test_cert_hash.to_s) rescue nil
     end
 
     def test_add_and_delete_certificate
       File.open(File.join(__dir__, "data", "ca_cert.pem")) do |file|
         @store_loader.add_cert(OpenSSL::X509::Certificate.new(file.read).to_der)
       end
-      assert_true @store_loader.delete_cert("4b34e3c6fa22f11902c3b892811d7afd50af2453")
+      assert_true @store_loader.delete_cert(get_test_cert_hash.to_s)
     end
   end
 end
