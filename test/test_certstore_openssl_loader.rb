@@ -73,4 +73,17 @@ class CertstoreOpenSSLLoaderTest < ::Test::Unit::TestCase
       loader.export_pkcs12("nonexistent", "passwd")
     end
   end
+
+  class AddAndDeleteCert < self
+    def setup
+      store_name = "ROOT"
+      @loader = create_loader(store_name)
+      @loader.delete_certificate(get_test_cert_hash.to_s) rescue nil
+    end
+
+    def test_add_and_delete_certificate
+      @loader.add_certificate(TEST_CERT_PATH)
+      assert_true @loader.delete_certificate(get_test_cert_hash.to_s)
+    end
+  end
 end

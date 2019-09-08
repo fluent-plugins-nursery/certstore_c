@@ -71,4 +71,19 @@ class CertstoreLoaderTest < ::Test::Unit::TestCase
       store_loader.export_pfx(thumbprint, "passwd")
     end
   end
+
+  class AddAndDeleteCert < self
+    def setup
+      store_name = "ROOT"
+      @store_loader = Certstore::Loader.new(store_name, enterprise: false)
+      @store_loader.delete_cert(get_test_cert_hash.to_s) rescue nil
+    end
+
+    def test_add_and_delete_certificate
+      File.open(TEST_CERT_PATH) do |file|
+        @store_loader.add_cert(OpenSSL::X509::Certificate.new(file.read).to_der)
+      end
+      assert_true @store_loader.delete_cert(get_test_cert_hash.to_s)
+    end
+  end
 end
