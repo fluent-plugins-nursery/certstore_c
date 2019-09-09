@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Hiroshi Hatake"]
   spec.email         = ["cosmo0920.wp@gmail.com"]
 
-  spec.summary       = %q{Windows CertStore loader.}
+  spec.summary       = %q{Windows CertStore loader and ruby-openssl extension for TLS connection.}
   spec.description   = spec.summary
   spec.homepage      = "https://github.com/cosmo0920/certstore_c"
 
