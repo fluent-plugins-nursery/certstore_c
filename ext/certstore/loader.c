@@ -48,6 +48,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   VALUE vStoreName;
   struct CertstoreLoader *loader;
   DWORD len;
+  DWORD errCode;
 
   Check_Type(store_name, T_STRING);
 
@@ -63,6 +64,14 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
     loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, winStoreName);
   } else {
     loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
+  }
+  errCode = GetLastError();
+  switch (errCode) {
+  case ERROR_ACCESS_DENIED: {
+    ALLOCV_END(vStoreName);
+    rb_raise(rb_eCertLoaderError, "cannot access specified logical store. Perhaps you should do as an administrator.");
+  }
+
   }
   ALLOCV_END(vStoreName);
 
