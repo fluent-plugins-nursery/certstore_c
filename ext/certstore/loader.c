@@ -442,4 +442,7 @@ Init_certstore_loader(VALUE rb_mCertstore)
   rb_define_method(rb_cCertLoader, "delete_cert", rb_win_certstore_loader_delete_certificate, 1);
   rb_define_method(rb_cCertLoader, "add_cert", rb_win_certstore_loader_add_certificate, 1);
   rb_define_method(rb_cCertLoader, "export_pfx", rb_win_certstore_loader_export_pfx, 2);
+
+  rb_ivar_set(rb_cCertLoader, rb_intern("@error_code"), INT2NUM(0));
+  rb_ivar_set(rb_cCertLoader, rb_intern("@error_message"), rb_utf8_str_new_cstr(""));
 }
