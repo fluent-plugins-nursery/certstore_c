@@ -92,17 +92,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   }
   default: {
     ALLOCV_END(vStoreName);
-    ret = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
-                        NULL,
-                        errCode,
-                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                        buffer,
-                        sizeof(buffer)/sizeof(buffer[0]),
-                        NULL);
-    if (ret) {
-      rb_ivar_set(self, rb_intern("@error_code"), INT2NUM(errCode));
-      rb_ivar_set(self, rb_intern("@error_message"), rb_utf8_str_new_cstr(buffer));
-    }
+    handle_error_code(self, errCode);
   }
 
   }
