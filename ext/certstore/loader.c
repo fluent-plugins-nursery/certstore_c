@@ -10,6 +10,7 @@
 /* limitations under the License. */
 
 #include <certstore.h>
+#include <tchar.h>
 
 static void certstore_loader_free(void *certstore);
 
@@ -49,6 +50,9 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   struct CertstoreLoader *loader;
   DWORD len;
   DWORD errCode;
+  TCHAR buffer[1024];
+  TCHAR errBuffer[1132];
+  DWORD ret;
 
   Check_Type(store_name, T_STRING);
 
@@ -67,9 +71,38 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   }
   errCode = GetLastError();
   switch (errCode) {
+  case ERROR_SUCCESS:
+    break;
   case ERROR_ACCESS_DENIED: {
     ALLOCV_END(vStoreName);
-    rb_raise(rb_eCertLoaderError, "cannot access specified logical store. Perhaps you should do as an administrator.");
+    ret = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+                        NULL,
+                        errCode,
+                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                        buffer,
+                        sizeof(buffer)/sizeof(buffer[0]),
+                        NULL);
+    if (ret) {
+      _snprintf_s(errBuffer, 1024, _TRUNCATE,
+                  "cannot access specified logical store. Perhaps you should do as an administrator. ErrorCode: %d, Message: %s",
+                  errCode,
+                  buffer);
+      rb_raise(rb_eCertLoaderError, errBuffer);
+    }
+  }
+  default: {
+    ALLOCV_END(vStoreName);
+    ret = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+                        NULL,
+                        errCode,
+                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                        buffer,
+                        sizeof(buffer)/sizeof(buffer[0]),
+                        NULL);
+    if (ret) {
+      rb_ivar_set(self, rb_intern("@error_code"), INT2NUM(errCode));
+      rb_ivar_set(self, rb_intern("@error_message"), rb_utf8_str_new_cstr(buffer));
+    }
   }
 
   }
