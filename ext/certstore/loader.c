@@ -134,7 +134,7 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
 
   errCode = GetLastError();
   if (ERROR_SUCCESS != errCode && CRYPT_E_NOT_FOUND != errCode) {
-    sprintf(errBuf, "ErrorCode(%d)", errCode);
+    _snprintf_s(errBuf, 256, _TRUNCATE, "ErrorCode(%d)", errCode);
 
     goto error;
   }
@@ -248,7 +248,7 @@ error:
 
   CertFreeCertificateContext(pContext);
 
-  sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+  _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot find certificates with thumbprint(%S)", winThumbprint);
   rb_raise(rb_eCertLoaderError, errBuf);
 }
 
@@ -274,7 +274,7 @@ rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
     case CRYPT_E_EXISTS:
       return Qfalse;
     default: {
-      sprintf(errBuf, "Cannot add certificates. ErrorCode: %d", errCode);
+      _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot add certificates. ErrorCode: %d", errCode);
       goto error;
 
       }
@@ -338,7 +338,7 @@ error:
 
   CertFreeCertificateContext(pContext);
 
-  sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+  _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot find certificates with thumbprint(%S)", winThumbprint);
   rb_raise(rb_eCertLoaderError, errBuf);
 }
 
@@ -382,7 +382,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
               &blob,
               pContext);
   if (!pContext) {
-    sprintf(errBuf, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+    _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot find certificates with thumbprint(%S)", winThumbprint);
 
     goto error;
   }
@@ -392,14 +392,14 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
 
   pfxPacket.pbData = NULL;
   if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
-    sprintf(errBuf, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
+    _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
 
     goto error;
   }
 
   pfxPacket.pbData = (LPBYTE)CryptMemAlloc(pfxPacket.cbData);
   if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
-    sprintf(errBuf, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
+    _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
 
     CryptMemFree(pfxPacket.pbData);
 
