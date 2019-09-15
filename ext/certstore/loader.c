@@ -91,7 +91,6 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
     }
   }
   default: {
-    ALLOCV_END(vStoreName);
     handle_error_code(self, errCode);
   }
 
