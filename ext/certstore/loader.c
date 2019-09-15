@@ -272,6 +272,7 @@ rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
 
     switch (errCode){
     case CRYPT_E_EXISTS:
+      handle_error_code(self, errCode);
       return Qfalse;
     default: {
       _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot add certificates. ErrorCode: %d", errCode);
