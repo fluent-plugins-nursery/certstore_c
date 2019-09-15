@@ -132,8 +132,9 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   certificate = malloc(sizeof(CHAR) * (strlen(utf8str) + strlen(certHeader) + strlen(certFooter)));
   sprintf(certificate, "%s%s%s", certHeader, utf8str, certFooter);
 
-  if (ERROR_SUCCESS != GetLastError() && CRYPT_E_NOT_FOUND != GetLastError()) {
-    sprintf(errBuf, "ErrorCode(%d)", GetLastError());
+  errCode = GetLastError();
+  if (ERROR_SUCCESS != errCode && CRYPT_E_NOT_FOUND != errCode) {
+    sprintf(errBuf, "ErrorCode(%d)", errCode);
 
     goto error;
   }
@@ -273,7 +274,7 @@ rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
     case CRYPT_E_EXISTS:
       return Qfalse;
     default: {
-      sprintf(errBuf, "Cannot add certificates. ErrorCode: %d", GetLastError());
+      sprintf(errBuf, "Cannot add certificates. ErrorCode: %d", errCode);
       goto error;
 
       }
