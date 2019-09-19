@@ -41,7 +41,6 @@ struct CertstoreLoader {
 };
 
 void handle_error_code(VALUE self, DWORD errCode);
-char* wstr_to_mbstr(UINT cp, const WCHAR *wstr, int clen);
 void Init_certstore_loader(VALUE rb_mCertstore);
 
 #endif // _WINEVT_H

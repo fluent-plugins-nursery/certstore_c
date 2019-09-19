@@ -101,9 +101,12 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
 static VALUE
 certificate_context_to_string(PCCERT_CONTEXT pContext)
 {
+  VALUE vWszString;
   WCHAR *wszString;
   DWORD cchString;
+  VALUE vUtf8str;
   CHAR *utf8str;
+  VALUE vCertificate;
   CHAR *certificate;
   CHAR *certHeader = "-----BEGIN CERTIFICATE-----\n";
   CHAR *certFooter = "\n-----END CERTIFICATE-----";
@@ -121,16 +124,19 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
     rb_raise(rb_eCertLoaderError, "cannot obtain certificate string length.");
   }
 
-  wszString = malloc(sizeof(WCHAR) * cchString);
+  wszString = ALLOCV_N(WCHAR, vWszString, cchString+1);
   CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
                        CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
                        wszString, &cchString);
 
-  utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
-  len = strlen(utf8str) + strlen(certHeader) + strlen(certFooter);
+  len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
+  utf8str = ALLOCV_N(CHAR, vUtf8str, len+1);
+  len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
+  WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len+1, NULL, NULL);
   // malloc ((strlen(base64 cert content) + strlen(header) +
   // strlen(footer) + 1(null terminator)) length).
-  certificate = malloc(len + 1);
+  len = strlen(utf8str) + strlen(certHeader) + strlen(certFooter);
+  certificate = ALLOCV_N(CHAR, vCertificate, len + 1);
   _snprintf_s(certificate, len + 1, len, "%s%s%s", certHeader, utf8str, certFooter);
 
   errCode = GetLastError();
@@ -141,16 +147,16 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   }
 
   VALUE rb_pem = rb_utf8_str_new_cstr(certificate);
-  xfree(utf8str);
-  free(wszString);
-  free(certificate);
+  ALLOCV_END(vUtf8str);
+  ALLOCV_END(vWszString);
+  ALLOCV_END(vCertificate);
 
   return rb_pem;
 
 error:
-  xfree(utf8str);
-  free(wszString);
-  free(certificate);
+  ALLOCV_END(vUtf8str);
+  ALLOCV_END(vWszString);
+  ALLOCV_END(vCertificate);
 
   rb_raise(rb_eCertLoaderError, errBuf);
 }
