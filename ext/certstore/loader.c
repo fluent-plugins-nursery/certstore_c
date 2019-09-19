@@ -109,6 +109,7 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   CHAR *certFooter = "\n-----END CERTIFICATE-----";
   CHAR errBuf[256];
   DWORD errCode;
+  DWORD len = 0;
 
 #ifndef CRYPT_STRING_NOCRLF
   #define CRYPT_STRING_NOCRLF 0x40000000
@@ -126,9 +127,11 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
                        wszString, &cchString);
 
   utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
-  // malloc sizeof CHAR * ((base64 cert content + header + footer) length).
-  certificate = malloc(sizeof(CHAR) * (strlen(utf8str) + strlen(certHeader) + strlen(certFooter)));
-  sprintf(certificate, "%s%s%s", certHeader, utf8str, certFooter);
+  len = strlen(utf8str) + strlen(certHeader) + strlen(certFooter);
+  // malloc ((strlen(base64 cert content) + strlen(header) +
+  // strlen(footer) + 1(null terminator)) length).
+  certificate = malloc(len + 1);
+  _snprintf_s(certificate, len + 1, len, "%s%s%s", certHeader, utf8str, certFooter);
 
   errCode = GetLastError();
   if (ERROR_SUCCESS != errCode && CRYPT_E_NOT_FOUND != errCode) {
