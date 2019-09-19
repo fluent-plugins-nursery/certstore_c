@@ -10,7 +10,6 @@
 /* limitations under the License. */
 
 #include <certstore.h>
-#include <tchar.h>
 
 static void certstore_loader_free(void *certstore);
 
