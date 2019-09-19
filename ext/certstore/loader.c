@@ -241,18 +241,17 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
               &blob,
               pContext);
 
-  if (!pContext)
-    goto error;
+  if (!pContext) {
+    rb_raise(rb_eCertLoaderError,
+             "Cannot find certificates with thumbprint(%S)",
+             winThumbprint);
+  }
 
   VALUE rb_certificate = certificate_context_to_string(pContext);
   CertFreeCertificateContext(pContext);
   ALLOCV_END(vThumbprint);
 
   return rb_certificate;
-
-error:
-
-  rb_raise(rb_eCertLoaderError, "Cannot find certificates with thumbprint(%S)", winThumbprint);
 }
 
 static VALUE
@@ -318,8 +317,11 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
               &blob,
               pContext);
 
-  if (!pContext)
-    goto error;
+  if (!pContext) {
+    rb_raise(rb_eCertLoaderError,
+             "Cannot find certificates with thumbprint(%S)",
+             winThumbprint);
+  }
 
   BOOL result = CertDeleteCertificateFromStore(pContext);
   CertFreeCertificateContext(pContext);
@@ -329,12 +331,6 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
     return Qtrue;
   else
     return Qfalse;
-
-error:
-
-  rb_raise(rb_eCertLoaderError,
-           "Cannot find certificates with thumbprint(%S)",
-           winThumbprint);
 }
 
 static VALUE
