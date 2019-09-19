@@ -22,11 +22,11 @@ wstr_to_mbstr(UINT cp, const WCHAR *wstr, int clen)
     return ptr;
 }
 
-TCHAR*
+void
 handle_error_code(VALUE self, DWORD errCode)
 {
   DWORD ret;
-  static CHAR buffer[1024];
+  CHAR buffer[1024];
 
   ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
                        NULL,
@@ -40,6 +40,4 @@ handle_error_code(VALUE self, DWORD errCode)
     rb_ivar_set(self, rb_intern("@error_code"), INT2NUM(errCode));
     rb_ivar_set(self, rb_intern("@error_message"), rb_utf8_str_new_cstr(buffer));
   }
-
-  return buffer;
 }
