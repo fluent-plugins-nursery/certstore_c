@@ -50,7 +50,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   struct CertstoreLoader *loader;
   DWORD len;
   DWORD errCode;
-  TCHAR buffer[1024];
+  CHAR buffer[1024];
   TCHAR errBuffer[1132];
   DWORD ret;
 
@@ -75,13 +75,13 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
     break;
   case ERROR_ACCESS_DENIED: {
     ALLOCV_END(vStoreName);
-    ret = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
-                        NULL,
-                        errCode,
-                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                        buffer,
-                        sizeof(buffer)/sizeof(buffer[0]),
-                        NULL);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
+                         NULL,
+                         errCode,
+                         MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                         buffer,
+                         sizeof(buffer)/sizeof(buffer[0]),
+                         NULL);
     if (ret) {
       _snprintf_s(errBuffer, 1024, _TRUNCATE,
                   "cannot access specified logical store. Perhaps you should do as an administrator. ErrorCode: %d, Message: %s",
