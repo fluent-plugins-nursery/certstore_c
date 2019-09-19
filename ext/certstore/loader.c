@@ -10,7 +10,6 @@
 /* limitations under the License. */
 
 #include <certstore.h>
-#include <tchar.h>
 
 static void certstore_loader_free(void *certstore);
 
@@ -50,8 +49,7 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   struct CertstoreLoader *loader;
   DWORD len;
   DWORD errCode;
-  TCHAR buffer[1024];
-  TCHAR errBuffer[1132];
+  CHAR buffer[1024];
   DWORD ret;
 
   Check_Type(store_name, T_STRING);
@@ -75,19 +73,18 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
     break;
   case ERROR_ACCESS_DENIED: {
     ALLOCV_END(vStoreName);
-    ret = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
-                        NULL,
-                        errCode,
-                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                        buffer,
-                        sizeof(buffer)/sizeof(buffer[0]),
-                        NULL);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
+                         NULL,
+                         errCode,
+                         MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                         buffer,
+                         sizeof(buffer)/sizeof(buffer[0]),
+                         NULL);
     if (ret) {
-      _snprintf_s(errBuffer, 1024, _TRUNCATE,
-                  "cannot access specified logical store. Perhaps you should do as an administrator. ErrorCode: %d, Message: %s",
-                  errCode,
-                  buffer);
-      rb_raise(rb_eCertLoaderError, errBuffer);
+      rb_raise(rb_eCertLoaderError,
+               "cannot access specified logical store. Perhaps you should do as an administrator. ErrorCode: %lu, Message: %s",
+               errCode,
+               buffer);
     }
   }
   default: {
@@ -103,14 +100,18 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
 static VALUE
 certificate_context_to_string(PCCERT_CONTEXT pContext)
 {
+  VALUE vWszString;
   WCHAR *wszString;
   DWORD cchString;
+  VALUE vUtf8str;
   CHAR *utf8str;
+  VALUE vCertificate;
   CHAR *certificate;
   CHAR *certHeader = "-----BEGIN CERTIFICATE-----\n";
   CHAR *certFooter = "\n-----END CERTIFICATE-----";
   CHAR errBuf[256];
   DWORD errCode;
+  DWORD len = 0;
 
 #ifndef CRYPT_STRING_NOCRLF
   #define CRYPT_STRING_NOCRLF 0x40000000
@@ -122,15 +123,20 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
     rb_raise(rb_eCertLoaderError, "cannot obtain certificate string length.");
   }
 
-  wszString = malloc(sizeof(WCHAR) * cchString);
+  wszString = ALLOCV_N(WCHAR, vWszString, cchString+1);
   CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
                        CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
                        wszString, &cchString);
 
-  utf8str = wstr_to_mbstr(CP_UTF8, wszString, -1);
-  // malloc sizeof CHAR * ((base64 cert content + header + footer) length).
-  certificate = malloc(sizeof(CHAR) * (strlen(utf8str) + strlen(certHeader) + strlen(certFooter)));
-  sprintf(certificate, "%s%s%s", certHeader, utf8str, certFooter);
+  len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
+  utf8str = ALLOCV_N(CHAR, vUtf8str, len+1);
+  len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
+  WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len+1, NULL, NULL);
+  // malloc ((strlen(base64 cert content) + strlen(header) +
+  // strlen(footer) + 1(null terminator)) length).
+  len = strlen(utf8str) + strlen(certHeader) + strlen(certFooter);
+  certificate = ALLOCV_N(CHAR, vCertificate, len + 1);
+  _snprintf_s(certificate, len + 1, len, "%s%s%s", certHeader, utf8str, certFooter);
 
   errCode = GetLastError();
   if (ERROR_SUCCESS != errCode && CRYPT_E_NOT_FOUND != errCode) {
@@ -140,16 +146,16 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
   }
 
   VALUE rb_pem = rb_utf8_str_new_cstr(certificate);
-  xfree(utf8str);
-  free(wszString);
-  free(certificate);
+  ALLOCV_END(vUtf8str);
+  ALLOCV_END(vWszString);
+  ALLOCV_END(vCertificate);
 
   return rb_pem;
 
 error:
-  xfree(utf8str);
-  free(wszString);
-  free(certificate);
+  ALLOCV_END(vUtf8str);
+  ALLOCV_END(vWszString);
+  ALLOCV_END(vCertificate);
 
   rb_raise(rb_eCertLoaderError, errBuf);
 }
@@ -208,7 +214,6 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
   PCCERT_CONTEXT pContext = NULL;
   struct CertstoreLoader *loader;
   DWORD len;
-  CHAR errBuf[256];
 
   Check_Type(rb_thumbprint, T_STRING);
 
@@ -235,28 +240,23 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
               &blob,
               pContext);
 
-  if (!pContext)
-    goto error;
+  if (!pContext) {
+    rb_raise(rb_eCertLoaderError,
+             "Cannot find certificates with thumbprint(%S)",
+             winThumbprint);
+  }
 
   VALUE rb_certificate = certificate_context_to_string(pContext);
   CertFreeCertificateContext(pContext);
   ALLOCV_END(vThumbprint);
 
   return rb_certificate;
-
-error:
-
-  CertFreeCertificateContext(pContext);
-
-  _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot find certificates with thumbprint(%S)", winThumbprint);
-  rb_raise(rb_eCertLoaderError, errBuf);
 }
 
 static VALUE
 rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
 {
   struct CertstoreLoader *loader;
-  CHAR errBuf[256];
 
   Check_Type(rb_der_cert_bin_str, T_STRING);
 
@@ -275,18 +275,12 @@ rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
       handle_error_code(self, errCode);
       return Qfalse;
     default: {
-      _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot add certificates. ErrorCode: %d", errCode);
-      goto error;
-
-      }
+      rb_raise(rb_eCertLoaderError, "Cannot add certificates. ErrorCode: %lu", errCode);
+    }
     }
   }
 
   return Qtrue;
-
-error:
-
-  rb_raise(rb_eCertLoaderError, errBuf);
 }
 
 static VALUE
@@ -296,7 +290,6 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
   PCCERT_CONTEXT pContext = NULL;
   struct CertstoreLoader *loader;
   DWORD len;
-  CHAR errBuf[256];
 
   Check_Type(rb_thumbprint, T_STRING);
 
@@ -323,8 +316,11 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
               &blob,
               pContext);
 
-  if (!pContext)
-    goto error;
+  if (!pContext) {
+    rb_raise(rb_eCertLoaderError,
+             "Cannot find certificates with thumbprint(%S)",
+             winThumbprint);
+  }
 
   BOOL result = CertDeleteCertificateFromStore(pContext);
   CertFreeCertificateContext(pContext);
@@ -334,13 +330,6 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
     return Qtrue;
   else
     return Qfalse;
-
-error:
-
-  CertFreeCertificateContext(pContext);
-
-  _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot find certificates with thumbprint(%S)", winThumbprint);
-  rb_raise(rb_eCertLoaderError, errBuf);
 }
 
 static VALUE
