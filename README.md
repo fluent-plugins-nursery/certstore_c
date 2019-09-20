@@ -1,6 +1,6 @@
 # Certstore
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0iukmyau7wq971o4/branch/master?svg=true)](https://ci.appveyor.com/project/cosmo0920/certstore-c/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/ecis54vyb81aset5/branch/master?svg=true)](https://ci.appveyor.com/project/cosmo0920/certstore-c-xbglu/branch/master)
 
 ## Prerequisites
 
