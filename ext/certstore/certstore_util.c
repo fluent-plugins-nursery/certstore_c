@@ -22,7 +22,7 @@ handle_error_code(VALUE self, DWORD errCode)
                        errCode,
                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
                        buffer,
-                       sizeof(buffer)/sizeof(buffer[0]),
+                       sizeof(buffer) / sizeof(buffer[0]),
                        NULL);
 
   if (ret) {
