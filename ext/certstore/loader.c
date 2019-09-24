@@ -11,19 +11,24 @@
 
 #include <certstore.h>
 
-static void certstore_loader_free(void *certstore);
+static void certstore_loader_free(void* certstore);
 
 static const rb_data_type_t rb_win_certstore_loader_type = {
-  "winevt/certstore_loader", {
-    0, certstore_loader_free, 0,
-  }, NULL, NULL,
+  "winevt/certstore_loader",
+  {
+    0,
+    certstore_loader_free,
+    0,
+  },
+  NULL,
+  NULL,
   RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static void
-certstore_loader_free(void *ptr)
+certstore_loader_free(void* ptr)
 {
-  struct CertstoreLoader *loader = (struct CertstoreLoader *)ptr;
+  struct CertstoreLoader* loader = (struct CertstoreLoader*)ptr;
   if (loader->hStore)
     CertCloseStore(loader->hStore, 0);
 
@@ -34,11 +39,9 @@ static VALUE
 rb_win_certstore_loader_alloc(VALUE klass)
 {
   VALUE obj;
-  struct CertstoreLoader *loader;
-  obj = TypedData_Make_Struct(klass,
-                              struct CertstoreLoader,
-                              &rb_win_certstore_loader_type,
-                              loader);
+  struct CertstoreLoader* loader;
+  obj = TypedData_Make_Struct(
+    klass, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
   return obj;
 }
 
@@ -46,7 +49,7 @@ static VALUE
 rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enterprise)
 {
   VALUE vStoreName;
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
   DWORD len;
   DWORD errCode;
   CHAR buffer[1024];
@@ -55,42 +58,50 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
   Check_Type(store_name, T_STRING);
 
   // store_name : To wide char
-  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), NULL, 0);
-  PWSTR winStoreName = ALLOCV_N(WCHAR, vStoreName, len+1);
-  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), winStoreName, len);
+  len = MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), NULL, 0);
+  PWSTR winStoreName = ALLOCV_N(WCHAR, vStoreName, len + 1);
+  MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(store_name), RSTRING_LEN(store_name), winStoreName, len);
   winStoreName[len] = L'\0';
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   if (RTEST(use_enterprise)) {
-    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, winStoreName);
+    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,
+                                   0,
+                                   0,
+                                   CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE,
+                                   winStoreName);
   } else {
-    loader->hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
+    loader->hStore = CertOpenStore(
+      CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
   }
   errCode = GetLastError();
   switch (errCode) {
-  case ERROR_SUCCESS:
-    break;
-  case ERROR_ACCESS_DENIED: {
-    ALLOCV_END(vStoreName);
-    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
-                         NULL,
-                         errCode,
-                         MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                         buffer,
-                         sizeof(buffer)/sizeof(buffer[0]),
-                         NULL);
-    if (ret) {
-      rb_raise(rb_eCertLoaderError,
-               "cannot access specified logical store. Perhaps you should do as an administrator. ErrorCode: %lu, Message: %s",
-               errCode,
-               buffer);
+    case ERROR_SUCCESS:
+      break;
+    case ERROR_ACCESS_DENIED: {
+      ALLOCV_END(vStoreName);
+      ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
+                           NULL,
+                           errCode,
+                           MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                           buffer,
+                           sizeof(buffer) / sizeof(buffer[0]),
+                           NULL);
+      if (ret) {
+        rb_raise(rb_eCertLoaderError,
+                 "cannot access specified logical store. Perhaps you should do as an "
+                 "administrator. ErrorCode: %lu, Message: %s",
+                 errCode,
+                 buffer);
+      }
     }
-  }
-  default: {
-    handle_error_code(self, errCode);
-  }
-
+    default: {
+      handle_error_code(self, errCode);
+    }
   }
   ALLOCV_END(vStoreName);
 
@@ -101,37 +112,41 @@ static VALUE
 certificate_context_to_string(PCCERT_CONTEXT pContext)
 {
   VALUE vWszString;
-  WCHAR *wszString;
+  WCHAR* wszString;
   DWORD cchString;
   VALUE vUtf8str;
-  CHAR *utf8str;
+  CHAR* utf8str;
   VALUE vCertificate;
-  CHAR *certificate;
-  CHAR *certHeader = "-----BEGIN CERTIFICATE-----\n";
-  CHAR *certFooter = "\n-----END CERTIFICATE-----";
+  CHAR* certificate;
+  CHAR* certHeader = "-----BEGIN CERTIFICATE-----\n";
+  CHAR* certFooter = "\n-----END CERTIFICATE-----";
   CHAR errBuf[256];
   DWORD errCode;
   DWORD len = 0;
 
 #ifndef CRYPT_STRING_NOCRLF
-  #define CRYPT_STRING_NOCRLF 0x40000000
+#define CRYPT_STRING_NOCRLF 0x40000000
 #endif
 
-  if (!CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
+  if (!CryptBinaryToStringW(pContext->pbCertEncoded,
+                            pContext->cbCertEncoded,
                             CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
-                            NULL, &cchString)) {
+                            NULL,
+                            &cchString)) {
     rb_raise(rb_eCertLoaderError, "cannot obtain certificate string length.");
   }
 
-  wszString = ALLOCV_N(WCHAR, vWszString, cchString+1);
-  CryptBinaryToStringW(pContext->pbCertEncoded, pContext->cbCertEncoded,
+  wszString = ALLOCV_N(WCHAR, vWszString, cchString + 1);
+  CryptBinaryToStringW(pContext->pbCertEncoded,
+                       pContext->cbCertEncoded,
                        CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
-                       wszString, &cchString);
+                       wszString,
+                       &cchString);
 
   len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
-  utf8str = ALLOCV_N(CHAR, vUtf8str, len+1);
+  utf8str = ALLOCV_N(CHAR, vUtf8str, len + 1);
   len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
-  WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len+1, NULL, NULL);
+  WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len + 1, NULL, NULL);
   // malloc ((strlen(base64 cert content) + strlen(header) +
   // strlen(footer) + 1(null terminator)) length).
   len = strlen(utf8str) + strlen(certHeader) + strlen(certFooter);
@@ -164,11 +179,12 @@ static VALUE
 rb_win_certstore_loader_each_pem(VALUE self)
 {
   PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
 
   RETURN_ENUMERATOR(self, 0, 0);
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   while ((pContext = CertEnumCertificatesInStore(loader->hStore, pContext)) != NULL) {
     VALUE rb_certificate = certificate_context_to_string(pContext);
@@ -183,9 +199,10 @@ rb_win_certstore_loader_each_pem(VALUE self)
 static VALUE
 rb_win_certstore_loader_dispose(VALUE self)
 {
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   /* What should we dispose here? */
 
@@ -196,13 +213,15 @@ static VALUE
 rb_win_certstore_loader_each(VALUE self)
 {
   PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
 
   RETURN_ENUMERATOR(self, 0, 0);
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
-  rb_ensure(rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_dispose, self);
+  rb_ensure(
+    rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_dispose, self);
 
   return Qnil;
 }
@@ -212,38 +231,48 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
 {
   VALUE vThumbprint;
   PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
   DWORD len;
 
   Check_Type(rb_thumbprint, T_STRING);
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   // thumbprint : To wide char
-  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
-  WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
-  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
+  len = MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
+  WCHAR* winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len + 1);
+  MultiByteToWideChar(CP_UTF8,
+                      0,
+                      RSTRING_PTR(rb_thumbprint),
+                      RSTRING_LEN(rb_thumbprint),
+                      winThumbprint,
+                      len);
   winThumbprint[len] = L'\0';
 
   BYTE pbThumb[CERT_THUMBPRINT_SIZE];
   CRYPT_HASH_BLOB blob;
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
-  CryptStringToBinaryW(winThumbprint, CERT_THUMBPRINT_STR_LENGTH, CRYPT_STRING_HEX, pbThumb,
-                       &blob.cbData, NULL, NULL);
+  CryptStringToBinaryW(winThumbprint,
+                       CERT_THUMBPRINT_STR_LENGTH,
+                       CRYPT_STRING_HEX,
+                       pbThumb,
+                       &blob.cbData,
+                       NULL,
+                       NULL);
 
-  pContext = CertFindCertificateInStore(
-              loader->hStore,
-              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-              0,
-              CERT_FIND_HASH,
-              &blob,
-              pContext);
+  pContext = CertFindCertificateInStore(loader->hStore,
+                                        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                                        0,
+                                        CERT_FIND_HASH,
+                                        &blob,
+                                        pContext);
 
   if (!pContext) {
-    rb_raise(rb_eCertLoaderError,
-             "Cannot find certificates with thumbprint(%S)",
-             winThumbprint);
+    rb_raise(
+      rb_eCertLoaderError, "Cannot find certificates with thumbprint(%S)", winThumbprint);
   }
 
   VALUE rb_certificate = certificate_context_to_string(pContext);
@@ -256,27 +285,30 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
 static VALUE
 rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
 {
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
 
   Check_Type(rb_der_cert_bin_str, T_STRING);
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
-  if (CertAddEncodedCertificateToStore(loader->hStore, X509_ASN_ENCODING,
-                                       RSTRING_PTR(rb_der_cert_bin_str), RSTRING_LEN(rb_der_cert_bin_str),
+  if (CertAddEncodedCertificateToStore(loader->hStore,
+                                       X509_ASN_ENCODING,
+                                       RSTRING_PTR(rb_der_cert_bin_str),
+                                       RSTRING_LEN(rb_der_cert_bin_str),
                                        CERT_STORE_ADD_NEW,
                                        NULL)) {
     return Qtrue;
   } else {
     DWORD errCode = GetLastError();
 
-    switch (errCode){
-    case CRYPT_E_EXISTS:
-      handle_error_code(self, errCode);
-      return Qfalse;
-    default: {
-      rb_raise(rb_eCertLoaderError, "Cannot add certificates. ErrorCode: %lu", errCode);
-    }
+    switch (errCode) {
+      case CRYPT_E_EXISTS:
+        handle_error_code(self, errCode);
+        return Qfalse;
+      default: {
+        rb_raise(rb_eCertLoaderError, "Cannot add certificates. ErrorCode: %lu", errCode);
+      }
     }
   }
 
@@ -288,38 +320,48 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
 {
   VALUE vThumbprint;
   PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
   DWORD len;
 
   Check_Type(rb_thumbprint, T_STRING);
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   // thumbprint : To wide char
-  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
-  WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
-  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
+  len = MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
+  WCHAR* winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len + 1);
+  MultiByteToWideChar(CP_UTF8,
+                      0,
+                      RSTRING_PTR(rb_thumbprint),
+                      RSTRING_LEN(rb_thumbprint),
+                      winThumbprint,
+                      len);
   winThumbprint[len] = L'\0';
 
   BYTE pbThumb[CERT_THUMBPRINT_SIZE];
   CRYPT_HASH_BLOB blob;
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
-  CryptStringToBinaryW(winThumbprint, CERT_THUMBPRINT_STR_LENGTH, CRYPT_STRING_HEX, pbThumb,
-                       &blob.cbData, NULL, NULL);
+  CryptStringToBinaryW(winThumbprint,
+                       CERT_THUMBPRINT_STR_LENGTH,
+                       CRYPT_STRING_HEX,
+                       pbThumb,
+                       &blob.cbData,
+                       NULL,
+                       NULL);
 
-  pContext = CertFindCertificateInStore(
-              loader->hStore,
-              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-              0,
-              CERT_FIND_HASH,
-              &blob,
-              pContext);
+  pContext = CertFindCertificateInStore(loader->hStore,
+                                        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                                        0,
+                                        CERT_FIND_HASH,
+                                        &blob,
+                                        pContext);
 
   if (!pContext) {
-    rb_raise(rb_eCertLoaderError,
-             "Cannot find certificates with thumbprint(%S)",
-             winThumbprint);
+    rb_raise(
+      rb_eCertLoaderError, "Cannot find certificates with thumbprint(%S)", winThumbprint);
   }
 
   BOOL result = CertDeleteCertificateFromStore(pContext);
@@ -337,42 +379,59 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
 {
   VALUE vThumbprint;
   PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader *loader;
+  struct CertstoreLoader* loader;
   DWORD len;
   CHAR errBuf[256];
   HCERTSTORE hMemoryStore = NULL;
   VALUE vPassword;
   CRYPT_DATA_BLOB pfxPacket;
 
-  TypedData_Get_Struct(self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  TypedData_Get_Struct(
+    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   // thumbprint : To wide char
-  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
-  WCHAR *winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len+1);
-  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), winThumbprint, len);
+  len = MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(rb_thumbprint), RSTRING_LEN(rb_thumbprint), NULL, 0);
+  WCHAR* winThumbprint = ALLOCV_N(WCHAR, vThumbprint, len + 1);
+  MultiByteToWideChar(CP_UTF8,
+                      0,
+                      RSTRING_PTR(rb_thumbprint),
+                      RSTRING_LEN(rb_thumbprint),
+                      winThumbprint,
+                      len);
   winThumbprint[len] = L'\0';
   // password : To wide char
-  len = MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_password), RSTRING_LEN(rb_password), NULL, 0);
-  WCHAR *winPassword = ALLOCV_N(WCHAR, vPassword, len+1);
-  MultiByteToWideChar(CP_UTF8, 0, RSTRING_PTR(rb_password), RSTRING_LEN(rb_password), winPassword, len);
+  len = MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(rb_password), RSTRING_LEN(rb_password), NULL, 0);
+  WCHAR* winPassword = ALLOCV_N(WCHAR, vPassword, len + 1);
+  MultiByteToWideChar(
+    CP_UTF8, 0, RSTRING_PTR(rb_password), RSTRING_LEN(rb_password), winPassword, len);
   winPassword[len] = L'\0';
 
   BYTE pbThumb[CERT_THUMBPRINT_SIZE];
   CRYPT_HASH_BLOB blob;
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
-  CryptStringToBinaryW(winThumbprint, CERT_THUMBPRINT_STR_LENGTH, CRYPT_STRING_HEX, pbThumb,
-                       &blob.cbData, NULL, NULL);
+  CryptStringToBinaryW(winThumbprint,
+                       CERT_THUMBPRINT_STR_LENGTH,
+                       CRYPT_STRING_HEX,
+                       pbThumb,
+                       &blob.cbData,
+                       NULL,
+                       NULL);
 
-  pContext = CertFindCertificateInStore(
-              loader->hStore,
-              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-              0,
-              CERT_FIND_HASH,
-              &blob,
-              pContext);
+  pContext = CertFindCertificateInStore(loader->hStore,
+                                        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                                        0,
+                                        CERT_FIND_HASH,
+                                        &blob,
+                                        pContext);
   if (!pContext) {
-    _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot find certificates with thumbprint(%S)", winThumbprint);
+    _snprintf_s(errBuf,
+                256,
+                _TRUNCATE,
+                "Cannot find certificates with thumbprint(%S)",
+                winThumbprint);
 
     goto error;
   }
@@ -381,15 +440,33 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
   CertAddCertificateContextToStore(hMemoryStore, pContext, CERT_STORE_ADD_ALWAYS, NULL);
 
   pfxPacket.pbData = NULL;
-  if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
-    _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
+  if (!PFXExportCertStoreEx(hMemoryStore,
+                            &pfxPacket,
+                            winPassword,
+                            NULL,
+                            EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY |
+                              REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
+    _snprintf_s(errBuf,
+                256,
+                _TRUNCATE,
+                "Cannot export pfx certificate with thumbprint(%S)",
+                winThumbprint);
 
     goto error;
   }
 
   pfxPacket.pbData = (LPBYTE)CryptMemAlloc(pfxPacket.cbData);
-  if (!PFXExportCertStoreEx(hMemoryStore, &pfxPacket, winPassword, NULL, EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY | REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
-    _snprintf_s(errBuf, 256, _TRUNCATE, "Cannot export pfx certificate with thumbprint(%S)", winThumbprint);
+  if (!PFXExportCertStoreEx(hMemoryStore,
+                            &pfxPacket,
+                            winPassword,
+                            NULL,
+                            EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY |
+                              REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
+    _snprintf_s(errBuf,
+                256,
+                _TRUNCATE,
+                "Cannot export pfx certificate with thumbprint(%S)",
+                winThumbprint);
 
     CryptMemFree(pfxPacket.pbData);
 
@@ -422,14 +499,18 @@ void
 Init_certstore_loader(VALUE rb_mCertstore)
 {
   rb_cCertLoader = rb_define_class_under(rb_mCertstore, "Loader", rb_cObject);
-  rb_eCertLoaderError = rb_define_class_under(rb_cCertLoader, "LoaderError", rb_eStandardError);
+  rb_eCertLoaderError =
+    rb_define_class_under(rb_cCertLoader, "LoaderError", rb_eStandardError);
 
   rb_define_alloc_func(rb_cCertLoader, rb_win_certstore_loader_alloc);
   rb_define_method(rb_cCertLoader, "initialize", rb_win_certstore_loader_initialize, 2);
   rb_define_method(rb_cCertLoader, "each", rb_win_certstore_loader_each, 0);
-  rb_define_method(rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
-  rb_define_method(rb_cCertLoader, "delete_cert", rb_win_certstore_loader_delete_certificate, 1);
-  rb_define_method(rb_cCertLoader, "add_cert", rb_win_certstore_loader_add_certificate, 1);
+  rb_define_method(
+    rb_cCertLoader, "find_cert", rb_win_certstore_loader_find_certificate, 1);
+  rb_define_method(
+    rb_cCertLoader, "delete_cert", rb_win_certstore_loader_delete_certificate, 1);
+  rb_define_method(
+    rb_cCertLoader, "add_cert", rb_win_certstore_loader_add_certificate, 1);
   rb_define_method(rb_cCertLoader, "export_pfx", rb_win_certstore_loader_export_pfx, 2);
 
   rb_ivar_set(rb_cCertLoader, rb_intern("@error_code"), INT2NUM(0));
