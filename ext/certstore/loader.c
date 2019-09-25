@@ -255,7 +255,7 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
   CryptStringToBinaryW(winThumbprint,
-                       CERT_THUMBPRINT_STR_LENGTH,
+                       0,
                        CRYPT_STRING_HEX,
                        pbThumb,
                        &blob.cbData,
@@ -344,7 +344,7 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
   CryptStringToBinaryW(winThumbprint,
-                       CERT_THUMBPRINT_STR_LENGTH,
+                       0,
                        CRYPT_STRING_HEX,
                        pbThumb,
                        &blob.cbData,
@@ -412,7 +412,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
   CryptStringToBinaryW(winThumbprint,
-                       CERT_THUMBPRINT_STR_LENGTH,
+                       0,
                        CRYPT_STRING_HEX,
                        pbThumb,
                        &blob.cbData,
