@@ -156,7 +156,7 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
 
   errCode = GetLastError();
   if (ERROR_SUCCESS != errCode && CRYPT_E_NOT_FOUND != errCode) {
-    _snprintf_s(errBuf, 256, _TRUNCATE, "ErrorCode(%d)", errCode);
+    _snprintf_s(errBuf, sizeof(errBuf), _TRUNCATE, "ErrorCode(%d)", errCode);
 
     goto error;
   }
@@ -427,7 +427,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
                                         pContext);
   if (!pContext) {
     _snprintf_s(errBuf,
-                256,
+                sizeof(errBuf),
                 _TRUNCATE,
                 "Cannot find certificates with thumbprint(%S)",
                 winThumbprint);
@@ -446,7 +446,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
                             EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY |
                               REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
     _snprintf_s(errBuf,
-                256,
+                sizeof(errBuf),
                 _TRUNCATE,
                 "Cannot export pfx certificate with thumbprint(%S)",
                 winThumbprint);
@@ -462,7 +462,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
                             EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY |
                               REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
     _snprintf_s(errBuf,
-                256,
+                sizeof(errBuf),
                 _TRUNCATE,
                 "Cannot export pfx certificate with thumbprint(%S)",
                 winThumbprint);
