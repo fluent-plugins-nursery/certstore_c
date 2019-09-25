@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Windows CertStore loader and ruby-openssl extension for TLS connection.}
   spec.description   = spec.summary
-  spec.homepage      = "https://github.com/cosmo0920/certstore_c"
+  spec.homepage      = "https://github.com/fluent-plugins-nursery/certstore_c"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
