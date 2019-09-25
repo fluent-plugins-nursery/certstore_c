@@ -146,7 +146,6 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
 
   len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
   utf8str = ALLOCV_N(CHAR, vUtf8str, len);
-  len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
   WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len, NULL, NULL);
   // malloc ((strlen(base64 cert content) + strlen(header) +
   // strlen(footer) + 1(null terminator)) length).
