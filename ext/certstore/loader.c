@@ -91,13 +91,14 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
                            buffer,
                            sizeof(buffer) / sizeof(buffer[0]),
                            NULL);
-      if (ret) {
-        rb_raise(rb_eCertLoaderError,
-                 "cannot access specified logical store. Perhaps you should do as an "
-                 "administrator. ErrorCode: %lu, Message: %s",
-                 errCode,
-                 buffer);
-      }
+      if (!ret)
+        buffer[0] = '\0';
+
+      rb_raise(rb_eCertLoaderError,
+               "cannot access specified logical store. Perhaps you should do as an "
+               "administrator. ErrorCode: %lu, Message: %s",
+               errCode,
+               buffer);
     }
     default: {
       handle_error_code(self, errCode);
