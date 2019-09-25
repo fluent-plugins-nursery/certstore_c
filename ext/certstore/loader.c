@@ -192,8 +192,6 @@ rb_win_certstore_loader_each_pem(VALUE self)
     rb_yield(rb_certificate);
   }
 
-  CertFreeCertificateContext(pContext);
-
   return Qnil;
 }
 
