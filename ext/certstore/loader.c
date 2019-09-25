@@ -78,12 +78,13 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
     loader->hStore = CertOpenStore(
       CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
   }
+  ALLOCV_END(vStoreName);
+
   errCode = GetLastError();
   switch (errCode) {
     case ERROR_SUCCESS:
       break;
     case ERROR_ACCESS_DENIED: {
-      ALLOCV_END(vStoreName);
       ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
                            NULL,
                            errCode,
@@ -91,19 +92,19 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
                            buffer,
                            sizeof(buffer) / sizeof(buffer[0]),
                            NULL);
-      if (ret) {
-        rb_raise(rb_eCertLoaderError,
-                 "cannot access specified logical store. Perhaps you should do as an "
-                 "administrator. ErrorCode: %lu, Message: %s",
-                 errCode,
-                 buffer);
-      }
+      if (!ret)
+        buffer[0] = '\0';
+
+      rb_raise(rb_eCertLoaderError,
+               "cannot access specified logical store. Perhaps you should do as an "
+               "administrator. ErrorCode: %lu, Message: %s",
+               errCode,
+               buffer);
     }
     default: {
       handle_error_code(self, errCode);
     }
   }
-  ALLOCV_END(vStoreName);
 
   return Qnil;
 }
@@ -136,7 +137,7 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
     rb_raise(rb_eCertLoaderError, "cannot obtain certificate string length.");
   }
 
-  wszString = ALLOCV_N(WCHAR, vWszString, cchString + 1);
+  wszString = ALLOCV_N(WCHAR, vWszString, cchString);
   CryptBinaryToStringW(pContext->pbCertEncoded,
                        pContext->cbCertEncoded,
                        CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
@@ -144,9 +145,9 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
                        &cchString);
 
   len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
-  utf8str = ALLOCV_N(CHAR, vUtf8str, len + 1);
+  utf8str = ALLOCV_N(CHAR, vUtf8str, len);
   len = WideCharToMultiByte(CP_UTF8, 0, wszString, -1, NULL, 0, NULL, NULL);
-  WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len + 1, NULL, NULL);
+  WideCharToMultiByte(CP_UTF8, 0, wszString, -1, utf8str, len, NULL, NULL);
   // malloc ((strlen(base64 cert content) + strlen(header) +
   // strlen(footer) + 1(null terminator)) length).
   len = strlen(utf8str) + strlen(certHeader) + strlen(certFooter);
@@ -155,7 +156,7 @@ certificate_context_to_string(PCCERT_CONTEXT pContext)
 
   errCode = GetLastError();
   if (ERROR_SUCCESS != errCode && CRYPT_E_NOT_FOUND != errCode) {
-    _snprintf_s(errBuf, 256, _TRUNCATE, "ErrorCode(%d)", errCode);
+    _snprintf_s(errBuf, sizeof(errBuf), _TRUNCATE, "ErrorCode(%d)", errCode);
 
     goto error;
   }
@@ -190,8 +191,6 @@ rb_win_certstore_loader_each_pem(VALUE self)
     VALUE rb_certificate = certificate_context_to_string(pContext);
     rb_yield(rb_certificate);
   }
-
-  CertFreeCertificateContext(pContext);
 
   return Qnil;
 }
@@ -256,7 +255,7 @@ rb_win_certstore_loader_find_certificate(VALUE self, VALUE rb_thumbprint)
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
   CryptStringToBinaryW(winThumbprint,
-                       CERT_THUMBPRINT_STR_LENGTH,
+                       0,
                        CRYPT_STRING_HEX,
                        pbThumb,
                        &blob.cbData,
@@ -345,7 +344,7 @@ rb_win_certstore_loader_delete_certificate(VALUE self, VALUE rb_thumbprint)
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
   CryptStringToBinaryW(winThumbprint,
-                       CERT_THUMBPRINT_STR_LENGTH,
+                       0,
                        CRYPT_STRING_HEX,
                        pbThumb,
                        &blob.cbData,
@@ -413,7 +412,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
   blob.cbData = CERT_THUMBPRINT_SIZE;
   blob.pbData = pbThumb;
   CryptStringToBinaryW(winThumbprint,
-                       CERT_THUMBPRINT_STR_LENGTH,
+                       0,
                        CRYPT_STRING_HEX,
                        pbThumb,
                        &blob.cbData,
@@ -428,7 +427,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
                                         pContext);
   if (!pContext) {
     _snprintf_s(errBuf,
-                256,
+                sizeof(errBuf),
                 _TRUNCATE,
                 "Cannot find certificates with thumbprint(%S)",
                 winThumbprint);
@@ -447,7 +446,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
                             EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY |
                               REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
     _snprintf_s(errBuf,
-                256,
+                sizeof(errBuf),
                 _TRUNCATE,
                 "Cannot export pfx certificate with thumbprint(%S)",
                 winThumbprint);
@@ -463,7 +462,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
                             EXPORT_PRIVATE_KEYS | REPORT_NO_PRIVATE_KEY |
                               REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)) {
     _snprintf_s(errBuf,
-                256,
+                sizeof(errBuf),
                 _TRUNCATE,
                 "Cannot export pfx certificate with thumbprint(%S)",
                 winThumbprint);

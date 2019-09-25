@@ -27,7 +27,6 @@
 #endif /* WIN32_WINNT */
 #define _WIN32_WINNT MINIMUM_WINDOWS_VERSION
 
-#define CERT_THUMBPRINT_STR_LENGTH 40
 #define CERT_THUMBPRINT_SIZE (160 / 8)
 
 #include <wincrypt.h>
