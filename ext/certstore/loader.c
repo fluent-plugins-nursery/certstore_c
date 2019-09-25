@@ -78,12 +78,13 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
     loader->hStore = CertOpenStore(
       CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, winStoreName);
   }
+  ALLOCV_END(vStoreName);
+
   errCode = GetLastError();
   switch (errCode) {
     case ERROR_SUCCESS:
       break;
     case ERROR_ACCESS_DENIED: {
-      ALLOCV_END(vStoreName);
       ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
                            NULL,
                            errCode,
@@ -104,7 +105,6 @@ rb_win_certstore_loader_initialize(VALUE self, VALUE store_name, VALUE use_enter
       handle_error_code(self, errCode);
     }
   }
-  ALLOCV_END(vStoreName);
 
   return Qnil;
 }
