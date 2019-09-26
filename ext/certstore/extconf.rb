@@ -14,7 +14,7 @@ have_library("crypt32")
 have_func("PFXExportCertStoreEx", "Wincrypt.h")
 
 $LDFLAGS << " -lcrypt32"
-$CFLAGS << " -std=c99 -fPIC -fms-extensions "
+$CFLAGS << " -Wall -std=c99 -fPIC -fms-extensions "
 # $CFLAGS << " -g -O0"
 
 create_makefile("certstore/certstore")
