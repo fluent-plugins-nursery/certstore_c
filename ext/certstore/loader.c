@@ -197,11 +197,6 @@ rb_win_certstore_loader_each_pem(VALUE self)
 static VALUE
 rb_win_certstore_loader_dispose(VALUE self)
 {
-  struct CertstoreLoader* loader;
-
-  TypedData_Get_Struct(
-    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
-
   /* What should we dispose here? */
 
   return Qnil;
@@ -210,13 +205,7 @@ rb_win_certstore_loader_dispose(VALUE self)
 static VALUE
 rb_win_certstore_loader_each(VALUE self)
 {
-  PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader* loader;
-
   RETURN_ENUMERATOR(self, 0, 0);
-
-  TypedData_Get_Struct(
-    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   rb_ensure(
     rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_dispose, self);
