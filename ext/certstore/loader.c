@@ -11,6 +11,12 @@
 
 #include <certstore.h>
 
+struct CertstoreLoader
+{
+  HCERTSTORE hStore;
+  PCCERT_CONTEXT pContext;
+};
+
 static void certstore_loader_free(void* certstore);
 
 static const rb_data_type_t rb_win_certstore_loader_type = {
@@ -29,6 +35,8 @@ static void
 certstore_loader_free(void* ptr)
 {
   struct CertstoreLoader* loader = (struct CertstoreLoader*)ptr;
+  if (loader->pContext)
+    CertFreeCertificateContext(loader->pContext);
   if (loader->hStore)
     CertCloseStore(loader->hStore, 0);
 
@@ -42,6 +50,8 @@ rb_win_certstore_loader_alloc(VALUE klass)
   struct CertstoreLoader* loader;
   obj = TypedData_Make_Struct(
     klass, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
+  loader->hStore = NULL;
+  loader->pContext = NULL;
   return obj;
 }
 
@@ -187,8 +197,10 @@ rb_win_certstore_loader_each_pem(VALUE self)
     self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   while ((pContext = CertEnumCertificatesInStore(loader->hStore, pContext)) != NULL) {
+    loader->pContext = pContext;
     VALUE rb_certificate = certificate_context_to_string(pContext);
     rb_yield(rb_certificate);
+    loader->pContext = NULL;
   }
 
   return Qnil;
@@ -202,7 +214,9 @@ rb_win_certstore_loader_dispose(VALUE self)
   TypedData_Get_Struct(
     self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
-  /* What should we dispose here? */
+  if (loader->pContext)
+    CertFreeCertificateContext(loader->pContext);
+  loader->pContext = NULL;
 
   return Qnil;
 }
