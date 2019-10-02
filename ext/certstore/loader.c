@@ -224,13 +224,7 @@ rb_win_certstore_loader_dispose(VALUE self)
 static VALUE
 rb_win_certstore_loader_each(VALUE self)
 {
-  PCCERT_CONTEXT pContext = NULL;
-  struct CertstoreLoader* loader;
-
   RETURN_ENUMERATOR(self, 0, 0);
-
-  TypedData_Get_Struct(
-    self, struct CertstoreLoader, &rb_win_certstore_loader_type, loader);
 
   rb_ensure(
     rb_win_certstore_loader_each_pem, self, rb_win_certstore_loader_dispose, self);
@@ -306,7 +300,7 @@ rb_win_certstore_loader_add_certificate(VALUE self, VALUE rb_der_cert_bin_str)
 
   if (CertAddEncodedCertificateToStore(loader->hStore,
                                        X509_ASN_ENCODING,
-                                       RSTRING_PTR(rb_der_cert_bin_str),
+                                       (const BYTE *)RSTRING_PTR(rb_der_cert_bin_str),
                                        RSTRING_LEN(rb_der_cert_bin_str),
                                        CERT_STORE_ADD_NEW,
                                        NULL)) {
@@ -487,7 +481,7 @@ rb_win_certstore_loader_export_pfx(VALUE self, VALUE rb_thumbprint, VALUE rb_pas
   ALLOCV_END(vThumbprint);
   ALLOCV_END(vPassword);
 
-  VALUE rb_str = rb_str_new(pfxPacket.pbData, pfxPacket.cbData);
+  VALUE rb_str = rb_str_new((const char *)pfxPacket.pbData, pfxPacket.cbData);
 
   CryptMemFree(pfxPacket.pbData);
   CertCloseStore(hMemoryStore, CERT_CLOSE_STORE_CHECK_FLAG);
