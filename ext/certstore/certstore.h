@@ -35,11 +35,6 @@ VALUE rb_mCertstore;
 VALUE rb_cCertLoader;
 VALUE rb_eCertLoaderError;
 
-struct CertstoreLoader
-{
-  HCERTSTORE hStore;
-};
-
 void handle_error_code(VALUE self, DWORD errCode);
 void Init_certstore_loader(VALUE rb_mCertstore);
 
