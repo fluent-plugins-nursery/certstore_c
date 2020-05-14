@@ -11,6 +11,9 @@
 
 #include <certstore.h>
 
+VALUE rb_cCertLoader;
+VALUE rb_eCertLoaderError;
+
 struct CertstoreLoader
 {
   HCERTSTORE hStore;
@@ -502,9 +505,9 @@ error:
 }
 
 void
-Init_certstore_loader(VALUE rb_mCertstore)
+Init_certstore_loader(VALUE certstore)
 {
-  rb_cCertLoader = rb_define_class_under(rb_mCertstore, "Loader", rb_cObject);
+  rb_cCertLoader = rb_define_class_under(certstore, "Loader", rb_cObject);
   rb_eCertLoaderError =
     rb_define_class_under(rb_cCertLoader, "LoaderError", rb_eStandardError);
 
