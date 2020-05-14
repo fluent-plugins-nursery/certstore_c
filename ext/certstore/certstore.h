@@ -31,11 +31,11 @@
 
 #include <wincrypt.h>
 
-VALUE rb_mCertstore;
-VALUE rb_cCertLoader;
-VALUE rb_eCertLoaderError;
+extern VALUE rb_mCertstore;
+extern VALUE rb_cCertLoader;
+extern VALUE rb_eCertLoaderError;
 
 void handle_error_code(VALUE self, DWORD errCode);
-void Init_certstore_loader(VALUE rb_mCertstore);
+void Init_certstore_loader(VALUE certstore);
 
 #endif // _WINEVT_H

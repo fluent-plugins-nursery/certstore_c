@@ -11,6 +11,8 @@
 
 #include <certstore.h>
 
+VALUE rb_mCertstore;
+
 void
 Init_certstore(void)
 {
