@@ -6,8 +6,8 @@ require "certstore/version"
 Gem::Specification.new do |spec|
   spec.name          = "certstore_c"
   spec.version       = Certstore::VERSION
-  spec.authors       = ["Hiroshi Hatake"]
-  spec.email         = ["cosmo0920.wp@gmail.com"]
+  spec.authors       = ["Hiroshi Hatake", "Takuro Ashie"]
+  spec.email         = ["cosmo0920.wp@gmail.com", "ashie@clear-code.com"]
 
   spec.summary       = %q{Windows CertStore loader and ruby-openssl extension for TLS connection.}
   spec.description   = spec.summary
