@@ -1,6 +1,6 @@
 # Certstore
 
-[![Build status](https://ci.appveyor.com/api/projects/status/ecis54vyb81aset5/branch/master?svg=true)](https://ci.appveyor.com/project/cosmo0920/certstore-c-xbglu/branch/master)
+[![windows](https://github.com/fluent-plugins-nursery/certstore_c/actions/workflows/windows.yml/badge.svg)](https://github.com/fluent-plugins-nursery/certstore_c/actions/workflows/windows.yml)
 
 ## Prerequisites
 
