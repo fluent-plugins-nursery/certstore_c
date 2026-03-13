@@ -13,7 +13,7 @@ end
 
 require "rake/extensiontask"
 
-spec = eval File.read("certstore_c.gemspec")
+spec = Gem::Specification.load("certstore_c.gemspec")
 
 Rake::ExtensionTask.new("certstore", spec) do |ext|
   ext.lib_dir = "lib/certstore"
